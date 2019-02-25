@@ -27,6 +27,12 @@ func (api *nodeMining) Once(ctx context.Context) (*types.Block, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	miningOwnerAddr, err := nd.MiningOwnerAddress(ctx, miningAddr)
+	if err != nil {
+		return nil, err
+	}
+
 	blockTime, mineDelay := nd.MiningTimes()
 
 	getStateByKey := func(ctx context.Context, tsKey string) (state.Tree, error) {
@@ -57,7 +63,7 @@ func (api *nodeMining) Once(ctx context.Context) (*types.Block, error) {
 	getAncestors := func(ctx context.Context, ts types.TipSet, newBlockHeight *types.BlockHeight) ([]types.TipSet, error) {
 		return chain.GetRecentAncestors(ctx, ts, nd.ChainReader, newBlockHeight, consensus.AncestorRoundsNeeded, consensus.LookBackParameter)
 	}
-	worker := mining.NewDefaultWorker(nd.MsgPool, getState, getWeight, getAncestors, consensus.NewDefaultProcessor(), nd.PowerTable, nd.Blockstore, nd.CborStore(), miningAddr, blockTime)
+	worker := mining.NewDefaultWorker(nd.MsgPool, getState, getWeight, getAncestors, consensus.NewDefaultProcessor(), nd.PowerTable, nd.Blockstore, nd.CborStore(), miningAddr, miningOwnerAddr, blockTime)
 
 	res, err := mining.MineOnce(ctx, worker, mineDelay, ts)
 	if err != nil {

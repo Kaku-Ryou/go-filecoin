@@ -62,13 +62,14 @@ type GetAncestors func(context.Context, types.TipSet, *types.BlockHeight) ([]typ
 // A MessageApplier processes all the messages in a message pool.
 type MessageApplier interface {
 	// ApplyMessagesAndPayRewards applies all state transitions related to a set of messages.
-	ApplyMessagesAndPayRewards(ctx context.Context, st state.Tree, vms vm.StorageMap, messages []*types.SignedMessage, minerAddr address.Address, bh *types.BlockHeight, ancestors []types.TipSet) (consensus.ApplyMessagesResponse, error)
+	ApplyMessagesAndPayRewards(ctx context.Context, st state.Tree, vms vm.StorageMap, messages []*types.SignedMessage, minerOwnerAddr address.Address, bh *types.BlockHeight, ancestors []types.TipSet) (consensus.ApplyMessagesResponse, error)
 }
 
 // DefaultWorker runs a mining job.
 type DefaultWorker struct {
-	createPoST DoSomeWorkFunc  // TODO: rename createPoSTFunc
-	minerAddr  address.Address // TODO: needs to be a key in the near future
+	createPoST     DoSomeWorkFunc  // TODO: rename createPoSTFunc
+	minerAddr      address.Address // TODO: needs to be a key in the near future
+	minerOwnerAddr address.Address
 
 	// consensus things
 	getStateTree GetStateTree
@@ -85,26 +86,27 @@ type DefaultWorker struct {
 }
 
 // NewDefaultWorker instantiates a new Worker.
-func NewDefaultWorker(messagePool *core.MessagePool, getStateTree GetStateTree, getWeight GetWeight, getAncestors GetAncestors, processor MessageApplier, powerTable consensus.PowerTableView, bs blockstore.Blockstore, cst *hamt.CborIpldStore, miner address.Address, bt time.Duration) *DefaultWorker {
-	w := NewDefaultWorkerWithDeps(messagePool, getStateTree, getWeight, getAncestors, processor, powerTable, bs, cst, miner, bt, func() {})
+func NewDefaultWorker(messagePool *core.MessagePool, getStateTree GetStateTree, getWeight GetWeight, getAncestors GetAncestors, processor MessageApplier, powerTable consensus.PowerTableView, bs blockstore.Blockstore, cst *hamt.CborIpldStore, miner address.Address, minerOwner address.Address, bt time.Duration) *DefaultWorker {
+	w := NewDefaultWorkerWithDeps(messagePool, getStateTree, getWeight, getAncestors, processor, powerTable, bs, cst, miner, minerOwner, bt, func() {})
 	w.createPoST = w.fakeCreatePoST
 	return w
 }
 
 // NewDefaultWorkerWithDeps instantiates a new Worker with custom functions.
-func NewDefaultWorkerWithDeps(messagePool *core.MessagePool, getStateTree GetStateTree, getWeight GetWeight, getAncestors GetAncestors, processor MessageApplier, powerTable consensus.PowerTableView, bs blockstore.Blockstore, cst *hamt.CborIpldStore, miner address.Address, bt time.Duration, createPoST DoSomeWorkFunc) *DefaultWorker {
+func NewDefaultWorkerWithDeps(messagePool *core.MessagePool, getStateTree GetStateTree, getWeight GetWeight, getAncestors GetAncestors, processor MessageApplier, powerTable consensus.PowerTableView, bs blockstore.Blockstore, cst *hamt.CborIpldStore, miner address.Address, minerOwner address.Address, bt time.Duration, createPoST DoSomeWorkFunc) *DefaultWorker {
 	return &DefaultWorker{
-		getStateTree: getStateTree,
-		getWeight:    getWeight,
-		getAncestors: getAncestors,
-		messagePool:  messagePool,
-		processor:    processor,
-		powerTable:   powerTable,
-		blockstore:   bs,
-		cstore:       cst,
-		createPoST:   createPoST,
-		minerAddr:    miner,
-		blockTime:    bt,
+		getStateTree:   getStateTree,
+		getWeight:      getWeight,
+		getAncestors:   getAncestors,
+		messagePool:    messagePool,
+		processor:      processor,
+		powerTable:     powerTable,
+		blockstore:     bs,
+		cstore:         cst,
+		createPoST:     createPoST,
+		minerAddr:      miner,
+		minerOwnerAddr: minerOwner,
+		blockTime:      bt,
 	}
 }
 

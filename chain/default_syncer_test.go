@@ -42,8 +42,9 @@ var (
 	genTS, link1, link2, link3, link4 types.TipSet
 
 	// utils
-	cidGetter    func() cid.Cid
-	minerAddress address.Address
+	cidGetter         func() cid.Cid
+	minerAddress      address.Address
+	minerOwnerAddress address.Address
 )
 
 func init() {
@@ -63,6 +64,7 @@ func init() {
 
 	genStateRoot = genesis.StateRoot
 	minerAddress = address.MakeTestAddress("miner")
+	minerOwnerAddress = address.MakeTestAddress("minerOwner")
 }
 
 // This function sets global variables according to the tests needs.  The

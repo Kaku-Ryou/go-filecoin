@@ -795,7 +795,7 @@ func (node *Node) StartMining(ctx context.Context) error {
 			return chain.GetRecentAncestors(ctx, ts, node.ChainReader, newBlockHeight, consensus.AncestorRoundsNeeded, consensus.LookBackParameter)
 		}
 		processor := consensus.NewDefaultProcessor()
-		worker := mining.NewDefaultWorker(node.MsgPool, getState, getWeight, getAncestors, processor, node.PowerTable, node.Blockstore, node.CborStore(), minerAddr, blockTime)
+		worker := mining.NewDefaultWorker(node.MsgPool, getState, getWeight, getAncestors, processor, node.PowerTable, node.Blockstore, node.CborStore(), minerAddr, minerOwnerAddr, blockTime)
 		node.MiningScheduler = mining.NewScheduler(worker, mineDelay, node.ChainReader.Head)
 	}
 

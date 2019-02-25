@@ -2,6 +2,15 @@ package msg
 
 import (
 	"context"
+	"github.com/filecoin-project/go-filecoin/actor/builtin"
+	"github.com/filecoin-project/go-filecoin/address"
+	"github.com/filecoin-project/go-filecoin/state"
+	"github.com/filecoin-project/go-filecoin/vm"
+
+	//"github.com/filecoin-project/go-filecoin/actor"
+	//"github.com/filecoin-project/go-filecoin/actor/builtin"
+	//"github.com/filecoin-project/go-filecoin/state"
+	//"github.com/filecoin-project/go-filecoin/vm"
 	"sync"
 	"testing"
 	"time"
@@ -153,17 +162,27 @@ func TestWaitConflicting(t *testing.T) {
 
 	require.NotNil(chainStore.GenesisCid())
 
+	// create a valid miner
+	st, err := state.LoadStateTree(ctx, cst, baseBlock.StateRoot, builtin.Actors)
+	vms := vm.NewStorageMap(waiter.bs)
+	minerAddr := address.MakeTestAddress("miner")
+	minerOwnerAddr := address.MakeTestAddress("minerOwner")
+	miner := testhelpers.RequireNewMinerActor(require, vms, minerAddr, minerOwnerAddr, []byte{}, 1000, testhelpers.RequireRandomPeerID(), types.ZeroAttoFIL)
+	st.SetActor(ctx, minerAddr, miner)
+	stCid, err := st.Flush(ctx)
+	require.NoError(err)
+
 	b1 := chain.RequireMkFakeChild(require,
 		chain.FakeChildParams{
-			Parent: baseTS, GenesisCid: chainStore.GenesisCid(), StateRoot: baseBlock.StateRoot})
+			MinerAddr: minerAddr, Parent: baseTS, GenesisCid: chainStore.GenesisCid(), StateRoot: stCid})
 	b1.Messages = []*types.SignedMessage{sm1}
 	b1.Ticket = []byte{0} // block 1 comes first in message application
 	core.MustPut(cst, b1)
 
 	b2 := chain.RequireMkFakeChild(require,
 		chain.FakeChildParams{
-			Parent: baseTS, GenesisCid: chainStore.GenesisCid(),
-			StateRoot: baseBlock.StateRoot, Nonce: uint64(1)})
+			MinerAddr: minerAddr, Parent: baseTS, GenesisCid: chainStore.GenesisCid(),
+			StateRoot: stCid, Nonce: uint64(1)})
 	b2.Messages = []*types.SignedMessage{sm2}
 	b2.Ticket = []byte{1}
 	core.MustPut(cst, b2)

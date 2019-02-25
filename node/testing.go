@@ -287,7 +287,7 @@ func RunCreateMiner(t *testing.T, node *Node, from address.Address, pledge uint6
 	getAncestors := func(ctx context.Context, ts types.TipSet, newBlockHeight *types.BlockHeight) ([]types.TipSet, error) {
 		return chain.GetRecentAncestors(ctx, ts, node.ChainReader, newBlockHeight, consensus.AncestorRoundsNeeded, consensus.LookBackParameter)
 	}
-	w := mining.NewDefaultWorker(node.MsgPool, getStateTree, getWeight, getAncestors, consensus.NewDefaultProcessor(), node.PowerTable, node.Blockstore, node.CborStore(), address.TestAddress, testhelpers.BlockTimeTest)
+	w := mining.NewDefaultWorker(node.MsgPool, getStateTree, getWeight, getAncestors, consensus.NewDefaultProcessor(), node.PowerTable, node.Blockstore, node.CborStore(), address.TestAddress, address.TestAddress2, testhelpers.BlockTimeTest)
 	cur := node.ChainReader.Head()
 	out, err := mining.MineOnce(ctx, w, mining.MineDelayTest, cur)
 	require.NoError(err)
